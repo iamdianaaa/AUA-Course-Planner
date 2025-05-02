@@ -1,7 +1,6 @@
-# scraper_scheduler.py
-
 import os
 import time
+import schedule
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,65 +10,89 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-def run_scraper():
-    print("Starting scraping...")
+class CourseScraper:
+    def __init__(self):
+        self.url = "https://auasonis.jenzabarcloud.com/GENSRsC.cfm"
 
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1920,1080")
+        script_dir = os.path.dirname(os.path.abspath(__file__))  # /src/external
+        data_dir = os.path.abspath(os.path.join(script_dir, "..", "data"))
+        self.filename = os.path.join(data_dir, "courses_scraped.json")
 
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-    wait = WebDriverWait(driver, 20)
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            print(f"Created directory: {data_dir}")
 
-    driver.get("https://auasonis.jenzabarcloud.com/GENSRsC.cfm")
+        if not os.path.isfile(self.filename):
+            with open(self.filename, "w", encoding="utf-8") as f:
+                f.write("[]")
+            print(f"Created new file at '{self.filename}'")
 
-    wait.until(EC.presence_of_element_located((By.ID, "crsbysemester")))
+    def run(self):
+        print("Starting scraping...")
 
-    driver.execute_script("""
-        let select = document.querySelector("select[name='crsbysemester_length']");
-        if (select) {
-            select.value = "-1";  // Show all records
-            select.dispatchEvent(new Event('change'));
-        }
-    """)
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
 
-    time.sleep(7)
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
+        wait = WebDriverWait(driver, 20)
 
-    table = driver.find_element(By.ID, "crsbysemester")
-    rows = table.find_element(By.TAG_NAME, "tbody").find_elements(By.TAG_NAME, "tr")
+        driver.get(self.url)
 
-    data = []
+        wait.until(EC.presence_of_element_located((By.ID, "crsbysemester")))
 
-    for row in rows:
-        columns = row.find_elements(By.TAG_NAME, "td")
-        if len(columns) == 12:
-            course_info = {
-                "Course": columns[0].text.strip(),
-                "Section": columns[1].text.strip(),
-                "Session": columns[2].text.strip(),
-                "Credits": columns[3].text.strip(),
-                "Campus": columns[4].text.strip(),
-                "Instructor": columns[5].text.strip(),
-                "Times": columns[6].text.strip(),
-                "Taken/Seats": columns[7].text.strip(),
-                "Spaces Waiting": columns[8].text.strip(),
-                "Delivery Method": columns[9].text.strip(),
-                "Dist. Learning": columns[10].text.strip(),
-                "Location": columns[11].text.strip()
+        driver.execute_script("""
+            let select = document.querySelector("select[name='crsbysemester_length']");
+            if (select) {
+                select.value = "-1";
+                select.dispatchEvent(new Event('input', { bubbles: true }));
+                select.dispatchEvent(new Event('change', { bubbles: true }));
             }
-            data.append(course_info)
+        """)
 
-    output_dir = "C:/Users/MSI/Desktop/Software-git/AUA-Course-Planner/src/data"
-    os.makedirs(output_dir, exist_ok=True)
-    filename = os.path.join(output_dir, "courses_scraped.json")
+        wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#crsbysemester tbody tr")))
 
-    df = pd.DataFrame(data)
-    df.to_json(filename, orient="records", indent=4, force_ascii=False)
+        table = driver.find_element(By.ID, "crsbysemester")
+        rows = table.find_element(By.TAG_NAME, "tbody").find_elements(By.TAG_NAME, "tr")
 
-    print(f"Scraping finished and saved into '{filename}'!")
+        data = []
 
-    driver.quit()
+        for row in rows:
+            columns = row.find_elements(By.TAG_NAME, "td")
+            if len(columns) == 12:
+                course_info = {
+                    "Course": columns[0].text.strip(),
+                    "Section": columns[1].text.strip(),
+                    "Session": columns[2].text.strip(),
+                    "Credits": columns[3].text.strip(),
+                    "Campus": columns[4].text.strip(),
+                    "Instructor": columns[5].text.strip(),
+                    "Times": columns[6].text.strip(),
+                    "Taken/Seats": columns[7].text.strip(),
+                    "Spaces Waiting": columns[8].text.strip(),
+                    "Delivery Method": columns[9].text.strip(),
+                    "Dist. Learning": columns[10].text.strip(),
+                    "Location": columns[11].text.strip()
+                }
+                data.append(course_info)
 
-run_scraper()
+        df = pd.DataFrame(data)
+        df.to_json(self.filename, orient="records", indent=4, force_ascii=False)
+
+        print(f"Scraping finished and saved into '{os.path.basename(self.filename)}'!")
+
+        driver.quit()
+
+def schedule_scraping():
+    scraper = CourseScraper()
+    schedule.every().day.at("14:55").do(scraper.run)
+
+    print("Scheduler started! Waiting for the next scheduled job...")
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+schedule_scraping()
