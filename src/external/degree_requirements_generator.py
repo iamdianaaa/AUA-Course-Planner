@@ -1,6 +1,6 @@
 import os
 import json
-import fitz  # PyMuPDF
+import fitz
 import requests
 from io import BytesIO
 from PIL import Image
@@ -15,7 +15,6 @@ class DegreeRequirementsExtractor:
         os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
 
     def save_entry(self, slug, entry):
-        # Step 1: Create file if doesn't exist, with valid structure
         if not os.path.exists(self.output_path) or os.stat(self.output_path).st_size == 0:
             all_data = {}
         else:
@@ -54,6 +53,7 @@ class DegreeRequirementsExtractor:
             print(f"Error extracting {slug} from PDF: {e}")
 
     def extract_from_image_links(self, url_map):
+
         for slug, url in url_map.items():
             try:
                 response = requests.get(url)
@@ -71,7 +71,23 @@ class DegreeRequirementsExtractor:
             except Exception as e:
                 print(f"Failed to extract from image link {slug}: {e}")
 
+    def extract_text_from_webpages(self, url_map):
+        for slug, url in url_map.items():
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                soup = BeautifulSoup(response.content, "html.parser")
 
+                paragraphs = soup.find_all("p")
+                text = "\n".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+
+                entry = {
+                    "program": slug.replace("_", " ").title(),
+                    "raw_text": text
+                }
+                self.save_entry(slug, entry)
+            except Exception as e:
+                print(f"Failed to extract from {slug}: {e}")
 
 
 if __name__ == "__main__":
@@ -105,3 +121,14 @@ if __name__ == "__main__":
     extractor.extract_from_image_links(image_links)
 
 
+    # Text-based HTML pages
+    text_page_links = {
+        "Master_of_Laws_(LL.M.)": "https://law.aua.am/llm/",
+        "Master of  Arts in Teaching English as a Foreign Language (MATEFL)": "https://tefl.aua.am/matefl/",
+        "Master of Science in Economics (MSE)": "https://cbe.aua.am/mse-program-structure/",
+        "Graduate Certificate in Data Analytics (CDA)": "https://cbe.aua.am/graduate-certificate-in-data-analytics-cda/",
+        "Master of Science in Management and Analytics (MSMA)": "https://cbe.aua.am/msma-degree-requirements/",
+        "Master of Public Health Program": "https://chs.aua.am/chs-admission-and-graduation-requirements/"
+    }
+
+    extractor.extract_text_from_webpages(text_page_links)
