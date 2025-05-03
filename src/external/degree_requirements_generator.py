@@ -90,45 +90,45 @@ class DegreeRequirementsExtractor:
                 print(f"Failed to extract from {slug}: {e}")
 
 
-if __name__ == "__main__":
-    extractor = DegreeRequirementsExtractor()
+#if __name__ == "__main__":
+#    extractor = DegreeRequirementsExtractor()
 
     #  PDF sources
-    pdf_links = {
-        "ba_business": "https://cbe.aua.am/files/2024/12/BA-in-Business-Degree-Requirements.pdf",
-        "ba_economics": "https://baec.aua.am/files/2024/04/EC-Current-Degree-Requirements.pdf",
-        "bs_c_computer-science": "https://cse.aua.am/files/2024/08/BS-in-CS-Degree-Requirements-2024.pdf",
-        "bs_data_science": "https://cse.aua.am/files/2024/09/Bachelor-of-Science-in-Data-Science-Degree-Requirements2024.pdf",
-        "bs_engineering_sciences": "https://cse.aua.am/files/2023/07/Bachelor-of-Science-in-Engineering-Sciences-Degree-Requirements-2.pdf",
-        "bs_environmental_science": "https://cse.aua.am/files/2024/08/BSESS-Curriculum-Map-Aug-2024.pdf",
-        "bs_nursing": "https://chs.aua.am/files/2024/01/BSN-Curriculum-map-2024.pdf",
-        "ms_cis":"https://cse.aua.am/files/2023/10/MS-in-CIS-Degree-Requirements.pdf",
-        "ms_iesm":"https://cse.aua.am/files/2024/01/IESM-DA_Degree-Requirements.pdf"
-    }
+#    pdf_links = {
+#        "ba_business": "https://cbe.aua.am/files/2024/12/BA-in-Business-Degree-Requirements.pdf",
+#        "ba_economics": "https://baec.aua.am/files/2024/04/EC-Current-Degree-Requirements.pdf",
+#        "bs_c_computer-science": "https://cse.aua.am/files/2024/08/BS-in-CS-Degree-Requirements-2024.pdf",
+#        "bs_data_science": "https://cse.aua.am/files/2024/09/Bachelor-of-Science-in-Data-Science-Degree-Requirements2024.pdf",
+#        "bs_engineering_sciences": "https://cse.aua.am/files/2023/07/Bachelor-of-Science-in-Engineering-Sciences-Degree-Requirements-2.pdf",
+#        "bs_environmental_science": "https://cse.aua.am/files/2024/08/BSESS-Curriculum-Map-Aug-2024.pdf",
+#        "bs_nursing": "https://chs.aua.am/files/2024/01/BSN-Curriculum-map-2024.pdf",
+#        "ms_cis":"https://cse.aua.am/files/2023/10/MS-in-CIS-Degree-Requirements.pdf",
+#        "ms_iesm":"https://cse.aua.am/files/2024/01/IESM-DA_Degree-Requirements.pdf"
+#    }
 
-    for slug, url in pdf_links.items():
-        extractor.extract_from_pdf_url(slug, url)
+#    for slug, url in pdf_links.items():
+#        extractor.extract_from_pdf_url(slug, url)
 
     # OCR from local images
-    image_links = {
-        "Master of Arts in International Relations and Diplomacy (MAIRD)": "https://psia.aua.am/files/2024/08/MAIRD_Course_Sequence-1.png",
-        "Master of Public Affairs (MPA)": "https://psia.aua.am/files/2024/08/MPA_Course_Sequence-1.png",
-        "mba_structure_1": "https://cbe.aua.am/files/2025/01/Program-Structure-1-1024x579.png",
-        "mba_structure_2": "https://cbe.aua.am/files/2025/01/MBA-Program-Structure-2.png",
-        "bachelor_degree_political_science": "https://bapg.aua.am/files/2022/09/PG-Degree-and-Graduation-RequirementsUpdated.jpg"
-    }
+#    image_links = {
+#        "Master of Arts in International Relations and Diplomacy (MAIRD)": "https://psia.aua.am/files/2024/08/MAIRD_Course_Sequence-1.png",
+#        "Master of Public Affairs (MPA)": "https://psia.aua.am/files/2024/08/MPA_Course_Sequence-1.png",
+#        "mba_structure_1": "https://cbe.aua.am/files/2025/01/Program-Structure-1-1024x579.png",
+#        "mba_structure_2": "https://cbe.aua.am/files/2025/01/MBA-Program-Structure-2.png",
+#        "bachelor_degree_political_science": "https://bapg.aua.am/files/2022/09/PG-Degree-and-Graduation-RequirementsUpdated.jpg"
+#    }
 
-    extractor.extract_from_image_links(image_links)
+#    extractor.extract_from_image_links(image_links)
 
 
     # Text-based HTML pages
-    text_page_links = {
-        "Master_of_Laws_(LL.M.)": "https://law.aua.am/llm/",
-        "Master of  Arts in Teaching English as a Foreign Language (MATEFL)": "https://tefl.aua.am/matefl/",
-        "Master of Science in Economics (MSE)": "https://cbe.aua.am/mse-program-structure/",
-        "Graduate Certificate in Data Analytics (CDA)": "https://cbe.aua.am/graduate-certificate-in-data-analytics-cda/",
-        "Master of Science in Management and Analytics (MSMA)": "https://cbe.aua.am/msma-degree-requirements/",
-        "Master of Public Health Program": "https://chs.aua.am/chs-admission-and-graduation-requirements/"
-    }
+#    text_page_links = {
+#        "Master_of_Laws_(LL.M.)": "https://law.aua.am/llm/",
+#        "Master of  Arts in Teaching English as a Foreign Language (MATEFL)": "https://tefl.aua.am/matefl/",
+#        "Master of Science in Economics (MSE)": "https://cbe.aua.am/mse-program-structure/",
+#        "Graduate Certificate in Data Analytics (CDA)": "https://cbe.aua.am/graduate-certificate-in-data-analytics-cda/",
+#        "Master of Science in Management and Analytics (MSMA)": "https://cbe.aua.am/msma-degree-requirements/",
+#        "Master of Public Health Program": "https://chs.aua.am/chs-admission-and-graduation-requirements/"
+#    }
 
-    extractor.extract_text_from_webpages(text_page_links)
+#    extractor.extract_text_from_webpages(text_page_links)
