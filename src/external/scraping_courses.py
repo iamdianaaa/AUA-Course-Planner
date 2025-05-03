@@ -1,6 +1,4 @@
 import os
-import time
-import schedule
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -27,7 +25,7 @@ class CourseScraper:
             #print(f"Created new file at '{self.filename}'")
 
     def run(self):
-        print("Starting scraping...")
+        #print("Starting scraping...")
 
         options = Options()
         options.add_argument("--headless")
@@ -82,7 +80,7 @@ class CourseScraper:
             df = pd.DataFrame(data)
             df.to_json(self.filename, orient="records", indent=4, force_ascii=False)
 
-            print(f"Scraping completed and saved to: {self.filename}")
+            #print(f"Scraping completed and saved to: {self.filename}")
 
         except Exception as e:
             print(f"Error during scraping: {e}")
@@ -90,14 +88,6 @@ class CourseScraper:
             driver.quit()
 
 
-def schedule_scraping():
-    scraper = CourseScraper()
-    schedule.every().day.at("07:20").do(scraper.run)
-    print("Scheduler started! Waiting for the next run...")
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+#scraper = CourseScraper()
+#scraper.run()
 
-
-if __name__ == "__main__":
-    schedule_scraping()

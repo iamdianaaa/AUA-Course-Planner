@@ -2,18 +2,19 @@ import requests
 import json
 import os
 import re
-from collections import defaultdict
 from bs4 import BeautifulSoup
+from collections import defaultdict
 
 
-class ScraperForAllCourses:
+class CourseScraper:
     def __init__(self, url="https://catalog.aua.am/course-descriptions-2024/"):
         self.url = url
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.output_file = os.path.join(base_dir, '..', 'data', 'scraped_courses', 'aua_courses_all_faculties.json')
+        self.raw_output_file = os.path.join(base_dir, '..', 'data', 'scraped_courses', 'aua_courses_all_faculties.json')
+        self.grouped_output_file = os.path.join(base_dir, '..', 'data', 'scraped_courses', 'courses_by_faculty.json')
         self.courses = []
 
-    def scrape(self):
+    def scrape_courses(self):
         response = requests.get(self.url)
         if response.status_code != 200:
             raise Exception(f"Failed to fetch page: {self.url}")
@@ -73,26 +74,14 @@ class ScraperForAllCourses:
                 "prerequisites": prerequisites.strip()
             })
 
-        self._save_to_file()
+        self._save_to_file(self.raw_output_file, self.courses)
+        #print(f"Scraped {len(self.courses)} courses and saved to:\n{self.raw_output_file}")
 
-    def _save_to_file(self):
-        os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
-        with open(self.output_file, "w", encoding="utf-8") as f:
-            json.dump(self.courses, f, indent=2, ensure_ascii=False)
-        print(f"Scraped {len(self.courses)} courses and saved to:\n{self.output_file}")
+    def group_by_faculty(self):
+        if not os.path.exists(self.raw_output_file):
+            raise FileNotFoundError(f"Input file not found at {self.raw_output_file}")
 
-
-class FacultyCourseGrouper:
-    def __init__(self):
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.input_file = os.path.join(base_dir, '..', 'data', 'scraped_courses', 'aua_courses_all_faculties.json')
-        self.output_file = os.path.join(base_dir, '..', 'data', 'scraped_courses', 'courses_by_faculty.json')
-
-    def group_courses_by_faculty(self):
-        if not os.path.exists(self.input_file):
-            raise FileNotFoundError(f"Input file not found at {self.input_file}")
-
-        with open(self.input_file, 'r', encoding='utf-8') as f:
+        with open(self.raw_output_file, 'r', encoding='utf-8') as f:
             all_courses = json.load(f)
 
         grouped = defaultdict(list)
@@ -100,15 +89,15 @@ class FacultyCourseGrouper:
             faculty = course.get("faculty", "Unknown")
             grouped[faculty].append(course)
 
-        with open(self.output_file, 'w', encoding='utf-8') as f:
-            json.dump(grouped, f, indent=2, ensure_ascii=False)
+        self._save_to_file(self.grouped_output_file, grouped)
+        #print(f"Grouped courses by faculty and saved to:\n{self.grouped_output_file}")
 
-        print(f"Grouped courses by faculty and saved to:\n{self.output_file}")
+    def _save_to_file(self, path, data):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-
-if __name__ == "__main__":
-    scraper = ScraperForAllCourses()
-    scraper.scrape()
-    grouper = FacultyCourseGrouper()
-    grouper.group_courses_by_faculty()
+#scraper = CourseScraper()
+#scraper.scrape_courses()
+#scraper.group_by_faculty()
