@@ -26,14 +26,11 @@ class DegreeRequirementsExtractor:
                 print(f"Skipping save: Existing JSON is corrupt or empty.")
                 all_data = {}
 
-        # Step 2: Save entry
         all_data[slug] = entry
         with open(self.output_path, "w", encoding="utf-8") as f:
             json.dump(all_data, f, indent=2, ensure_ascii=False)
-        #print(f"Saved '{slug}' to degree_requirements.json")
 
     def extract_from_pdf_url(self, slug, url, program_name=None):
-        print(f"Extracting PDF for: {slug}")
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -57,11 +54,8 @@ class DegreeRequirementsExtractor:
             print(f"Error extracting {slug} from PDF: {e}")
 
     def extract_from_image_links(self, url_map):
-        print("Extracting degree requirements from image links...")
-
         for slug, url in url_map.items():
             try:
-                print(f"Processing image for: {slug}")
                 response = requests.get(url)
                 response.raise_for_status()
 
@@ -109,6 +103,5 @@ if __name__ == "__main__":
     }
 
     extractor.extract_from_image_links(image_links)
-
 
 
