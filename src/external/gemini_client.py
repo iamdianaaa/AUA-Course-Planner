@@ -38,5 +38,8 @@ class GeminiClient:
         except Exception as e:
             raise RuntimeError(f"Failed to reset chat: {e}")
 
-    def get_chat_history(self):
-        return [(msg.role, msg.parts[0].text) for msg in self.chat.history]
+    def get_history(self):
+        return [msg.to_dict() for msg in self.chat.history]
+
+    def export_history(self):
+        return [msg.to_dict() for msg in self.chat.history]
