@@ -1,13 +1,13 @@
 from google import generativeai as genai
 from google.api_core.exceptions import GoogleAPIError
-from prompt_generator import PromptGenerator
+from .prompt_generator import PromptGenerator
 
 
 class GeminiClient:
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-pro-exp-03-25"):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-pro-exp-03-25", history: list = None):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(model_name)
-        self.chat = None
+        self.chat = self.model.start_chat(history=history or [])
 
     def start_conversation(self, user_input: str) -> str:
         try:
@@ -39,7 +39,10 @@ class GeminiClient:
             raise RuntimeError(f"Failed to reset chat: {e}")
 
     def get_history(self):
-        return [msg.to_dict() for msg in self.chat.history]
-
-    def export_history(self):
-        return [msg.to_dict() for msg in self.chat.history]
+        return [
+            {
+                "role": msg.role,
+                "parts": [part.text for part in msg.parts]
+            }
+            for msg in self.chat.history
+        ]
