@@ -1,4 +1,5 @@
 from google import generativeai as genai
+from google.api_core.exceptions import GoogleAPIError
 from prompt_generator import PromptGenerator
 
 
@@ -9,22 +10,33 @@ class GeminiClient:
         self.chat = None
 
     def start_conversation(self, user_input: str) -> str:
-        self.chat = self.model.start_chat()
-        prompt_generator = PromptGenerator(user_input)
-        prompt = prompt_generator.build_prompt()
-        return self.send_message(prompt)
+        try:
+            self.chat = self.model.start_chat()
+            prompt_generator = PromptGenerator(user_input)
+            prompt = prompt_generator.build_prompt()
+            return self.send_message(prompt)
+        except Exception as e:
+            raise RuntimeError(f"Failed to start conversation: {e}")
 
     def send_message(self, message: str) -> str:
-        if not self.chat:
-            self.chat = self.model.start_chat()
-        response = self.chat.send_message(message)
-        return response.text.strip()
+        try:
+            if not self.chat:
+                self.chat = self.model.start_chat()
+            response = self.chat.send_message(message)
+            return response.text.strip()
+        except GoogleAPIError as e:
+            raise RuntimeError(f"Google API error: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Failed to send message: {e}")
 
     def continue_conversation(self, follow_up_message: str) -> str:
         return self.send_message(follow_up_message)
 
     def reset_chat(self):
-        self.chat = self.model.start_chat()
+        try:
+            self.chat = self.model.start_chat()
+        except Exception as e:
+            raise RuntimeError(f"Failed to reset chat: {e}")
 
     def get_chat_history(self):
         return [(msg.role, msg.parts[0].text) for msg in self.chat.history]
