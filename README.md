@@ -7,32 +7,26 @@
 git clone git@github.com:iamdianaaa/AUA-Course-Planner.git
 ```
 
-## Installing requirements locally
+This project uses Docker and Docker Compose to run the Flask backend and Redis in separate containers.
 
-It is suggested to create a virtual environment firstly:
+### Prerequisites
+- Python 3.11+
+- [Docker and Docker Compose](https://www.docker.com/)
+
+
+## Running the application with docker
 
 ```bash
-python -m venv venv
-.\venv\Scripts\activate # on Windows
-source venv/bin/activate # on Ubuntu
+docker-compose up --build
 ```
 
-Then install the requirements specified in requirements.txt file:
+This will 
+- Build the Flask app image from the Dockerfile
+- Start Redis as a background service
+- Run Backend on http://localhost:5000
+
+## Stop the application just run:
 
 ```bash
-pip install -r requirements.txt
-```
-
-## Running the application locally
-
-```bash
-# on Windows
-set FLASK_APP=main.py 
-set FLASK_ENV=development
-flask run
-
-# on Ubuntu
-export FLASK_APP=main.py 
-export FLASK_ENV=development
-flask run
+docker-compose down
 ```
