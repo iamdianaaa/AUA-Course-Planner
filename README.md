@@ -25,8 +25,25 @@ This will
 - Start Redis as a background service
 - Run Backend on http://localhost:5000
 
-## Stop the application just run:
+## Stop the application 
 
 ```bash
 docker-compose down
+```
+
+## Running tests locally
+
+Tests are located in the /tests folder.
+
+Firstly set the PYTHONPATH to the root folders location to be able to import from src
+
+```bash
+export PYTHONPATH=<root folder> # on Ubuntu
+set PYTHONPATH=<root folder> # on Windows
+```
+
+To run the tests, use the following command from the root folder.
+
+```bash
+pytest tests/
 ```
