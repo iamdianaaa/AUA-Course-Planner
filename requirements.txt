@@ -3,3 +3,5 @@ pandas~=2.2.3
 selenium~=4.31.0
 google-generativeai
 redis
+pytest
+pytest-mock
