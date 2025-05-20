@@ -10,7 +10,7 @@ class RedisSessionStore:
             port=AppConfig.REDIS.PORT,
             db=AppConfig.REDIS.DB,
             password=AppConfig.REDIS.PASSWORD,
-            decode_responses=True
+            decode_responses=True,
         )
         self.ttl = AppConfig.REDIS.TTL_SECONDS
 
@@ -23,12 +23,20 @@ class RedisSessionStore:
     def get_session(self, user_id: str) -> dict | None:
         try:
             raw = self.client.get(f"chat:{user_id}")
-            data = json.loads(raw) if raw else None
-            return data if isinstance(data, list) else None
+            if not raw:
+                return None
+            data = json.loads(raw)
+            return data if isinstance(data, dict) else None
         except redis.RedisError as e:
             raise RuntimeError(f"Failed to get Redis session: {e}")
         except json.JSONDecodeError:
             return None
+
+    def get_raw_history(self, user_id: str) -> list | None:
+        session = self.get_session(user_id)
+        if session and "raw_history" in session:
+            return session["raw_history"]
+        return None
 
     def delete_session(self, user_id: str):
         try:

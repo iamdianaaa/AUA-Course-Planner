@@ -5,3 +5,4 @@ google-generativeai
 redis
 pytest
 pytest-mock
+flask-cors
