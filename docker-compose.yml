@@ -30,5 +30,5 @@ services:
       - ./course-planner-ui:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
+      - "${VITE_PORT:-3000}:${VITE_PORT:-3000}"
     command: yarn dev

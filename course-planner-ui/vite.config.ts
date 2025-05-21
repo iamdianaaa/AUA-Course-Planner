@@ -8,6 +8,7 @@ export default ({ mode }: ConfigEnv) => {
   return defineConfig({
     plugins: [react()],
     server: {
+      host: true,
       port: Number(env.VITE_PORT) || 3000,
     },
   });
