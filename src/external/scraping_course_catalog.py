@@ -10,8 +10,12 @@ class CourseScraper:
     def __init__(self, url="https://catalog.aua.am/course-descriptions-2024/"):
         self.url = url
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.raw_output_file = os.path.join(base_dir, '..', 'data', 'scraped_courses', 'aua_courses_all_faculties.json')
-        self.grouped_output_file = os.path.join(base_dir, '..', 'data', 'scraped_courses', 'courses_by_faculty.json')
+        self.raw_output_file = os.path.join(
+            base_dir, "..", "data", "scraped_courses", "aua_courses_all_faculties.json"
+        )
+        self.grouped_output_file = os.path.join(
+            base_dir, "..", "data", "scraped_courses", "courses_by_faculty.json"
+        )
         self.courses = []
 
     def scrape_courses(self):
@@ -20,11 +24,13 @@ class CourseScraper:
             raise Exception(f"Failed to fetch page: {self.url}")
 
         soup = BeautifulSoup(response.content, "html.parser")
-        paragraphs = [p.get_text(strip=True) for p in soup.find_all("p") if p.get_text(strip=True)]
+        paragraphs = [
+            p.get_text(strip=True) for p in soup.find_all("p") if p.get_text(strip=True)
+        ]
 
         course_chunks = []
         current_chunk = []
-        code_pattern = re.compile(r'^[A-Z]{2,4}\d{3}$')
+        code_pattern = re.compile(r"^[A-Z]{2,4}\d{3}$")
 
         for text in paragraphs:
             if code_pattern.match(text):
@@ -65,23 +71,25 @@ class CourseScraper:
                 else:
                     description += line + " "
 
-            self.courses.append({
-                "faculty": faculty,
-                "code": code,
-                "title": title,
-                "description": description.strip(),
-                "credits": credits,
-                "prerequisites": prerequisites.strip()
-            })
+            self.courses.append(
+                {
+                    "faculty": faculty,
+                    "code": code,
+                    "title": title,
+                    "description": description.strip(),
+                    "credits": credits,
+                    "prerequisites": prerequisites.strip(),
+                }
+            )
 
         self._save_to_file(self.raw_output_file, self.courses)
-        #print(f"Scraped {len(self.courses)} courses and saved to:\n{self.raw_output_file}")
+        # print(f"Scraped {len(self.courses)} courses and saved to:\n{self.raw_output_file}")
 
     def group_by_faculty(self):
         if not os.path.exists(self.raw_output_file):
             raise FileNotFoundError(f"Input file not found at {self.raw_output_file}")
 
-        with open(self.raw_output_file, 'r', encoding='utf-8') as f:
+        with open(self.raw_output_file, "r", encoding="utf-8") as f:
             all_courses = json.load(f)
 
         grouped = defaultdict(list)
@@ -90,14 +98,9 @@ class CourseScraper:
             grouped[faculty].append(course)
 
         self._save_to_file(self.grouped_output_file, grouped)
-        #print(f"Grouped courses by faculty and saved to:\n{self.grouped_output_file}")
+        # print(f"Grouped courses by faculty and saved to:\n{self.grouped_output_file}")
 
     def _save_to_file(self, path, data):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-
-
-#scraper = CourseScraper()
-#scraper.scrape_courses()
-#scraper.group_by_faculty()

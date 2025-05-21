@@ -4,7 +4,12 @@ from .prompt_generator import PromptGenerator
 
 
 class GeminiClient:
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-pro-exp-03-25", history: list = None):
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str = "gemini-2.0-flash",
+        history: list = None,
+    ):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(model_name)
         self.chat = self.model.start_chat(history=history or [])
@@ -40,9 +45,6 @@ class GeminiClient:
 
     def get_history(self):
         return [
-            {
-                "role": msg.role,
-                "parts": [part.text for part in msg.parts]
-            }
+            {"role": msg.role, "parts": [part.text for part in msg.parts]}
             for msg in self.chat.history
         ]

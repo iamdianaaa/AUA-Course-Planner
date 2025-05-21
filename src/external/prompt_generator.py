@@ -16,22 +16,31 @@ class PromptGenerator:
         self.completed_courses = prefs["completed_courses"]
         self.prefs = prefs
 
-        self.requirements = self._load_json(os.path.join(FOLDER_SCRAPED, "aua_courses_all_faculties.json"))
-        self.semester_courses = self._normalize_semester_courses(
-            os.path.join(FOLDER_SCRAPED, "aua_courses_by_semester.json"), self.requirements
+        self.requirements = self._load_json(
+            os.path.join(FOLDER_SCRAPED, "aua_courses_all_faculties.json")
         )
-        self.degree_requirements = self._load_json(os.path.join(FOLDER_REQUIREMENTS, "degree_requirements.json"))
+        self.semester_courses = self._normalize_semester_courses(
+            os.path.join(FOLDER_SCRAPED, "aua_courses_by_semester.json"),
+            self.requirements,
+        )
+        self.degree_requirements = self._load_json(
+            os.path.join(FOLDER_REQUIREMENTS, "degree_requirements.json")
+        )
         self.program_requirements = self.degree_requirements.get(self.program_name, {})
 
-        self.courses_by_faculty = self._load_json(os.path.join(FOLDER_SCRAPED, "courses_by_faculty.json"))
+        self.courses_by_faculty = self._load_json(
+            os.path.join(FOLDER_SCRAPED, "courses_by_faculty.json")
+        )
         self.faculty_course_codes = {
             c["code"].replace(" ", "")
             for p, courses in self.courses_by_faculty.items()
             if p.lower().replace(" ", "_") == self.program_name
-            for c in courses if "code" in c
+            for c in courses
+            if "code" in c
         }
+
     def _load_json(self, path: str):
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
     def extract_preferences(self, user_input: str) -> dict:
@@ -40,7 +49,7 @@ class PromptGenerator:
             "max_credits": None,
             "unavailable_days": [],
             "program_name": None,
-            "completed_courses": []
+            "completed_courses": [],
         }
 
         input_lower = user_input.lower()
@@ -74,7 +83,7 @@ class PromptGenerator:
             "international relations and diplomacy": 12,
             "master of arts in international relations and diplomacy": 12,
             "mpa": 12,
-            "master of public affairs": 12
+            "master of public affairs": 12,
         }
 
         for program, base_credits in default_base.items():
@@ -84,15 +93,23 @@ class PromptGenerator:
                 prefs["raw_program_phrase"] = program.title()
                 break
             else:
-                match = re.search(r"(?:student in|studying|enrolled in|pursuing|majoring in|doing my|"
-                                  r"currently in|master in|master of|bachelor in|bachelor of|program in|studies in|"
-                                  r"from the|specializing in|my degree is in|taking the|part of the)\s+([a-z\s]+)", input_lower)
-                prefs["raw_program_phrase"] = match.group(1).strip().title() if match else "Not recognized"
+                match = re.search(
+                    r"(?:student in|studying|enrolled in|pursuing|majoring in|doing my|"
+                    r"currently in|master in|master of|bachelor in|bachelor of|program in|studies in|"
+                    r"from the|specializing in|my degree is in|taking the|part of the)\s+([a-z\s]+)",
+                    input_lower,
+                )
+                prefs["raw_program_phrase"] = (
+                    match.group(1).strip().title() if match else "Not recognized"
+                )
 
         if "completed courses" in input_lower:
-            codes = re.findall(r"(?:bus|ecm|econ|hhm|mgmt|chss|ec|hrsj|"
-                               r"ird|law|pa|pg|psia|tefl|env|cs|ds|engs|epic|"
-                               r"ess|iesm|bsn|ph|cbe|cse|fnd|)?\s?\d{3}", input_lower)
+            codes = re.findall(
+                r"(?:bus|ecm|econ|hhm|mgmt|chss|ec|hrsj|"
+                r"ird|law|pa|pg|psia|tefl|env|cs|ds|engs|epic|"
+                r"ess|iesm|bsn|ph|cbe|cse|fnd|)?\s?\d{3}",
+                input_lower,
+            )
             prefs["completed_courses"] = [c.upper().replace(" ", "") for c in codes]
 
         workload_modifiers = {
@@ -104,7 +121,7 @@ class PromptGenerator:
             "balanced": 0.8,
             "heavy": 1.0,
             "maximum": 1.0,
-            "intensive": 1.0
+            "intensive": 1.0,
         }
 
         prefs["workload_explicitly_mentioned"] = False
@@ -134,14 +151,16 @@ class PromptGenerator:
                 continue
             title = text.split("\n\n")[0]
             cat = catalog_by_code.get(code, {})
-            normalized_courses.append({
-                "code": code,
-                "title": title,
-                "description": cat.get("description", ""),
-                "prerequisites": cat.get("prerequisites", ""),
-                "credits": float(raw.get("Credits", 0)),
-                "raw": raw
-            })
+            normalized_courses.append(
+                {
+                    "code": code,
+                    "title": title,
+                    "description": cat.get("description", ""),
+                    "prerequisites": cat.get("prerequisites", ""),
+                    "credits": float(raw.get("Credits", 0)),
+                    "raw": raw,
+                }
+            )
 
         return normalized_courses
 
@@ -158,11 +177,14 @@ class PromptGenerator:
         required = set(self._get_required_course_codes())
         completed = set(self.completed_courses)
         return [
-            c for c in self.semester_courses
+            c
+            for c in self.semester_courses
             if self._prerequisites_met(c)
-               and c["code"] not in completed
-               and c["code"] in required
-               and (not self.faculty_course_codes or c["code"] in self.faculty_course_codes)
+            and c["code"] not in completed
+            and c["code"] in required
+            and (
+                not self.faculty_course_codes or c["code"] in self.faculty_course_codes
+            )
         ]
 
     def build_prompt(self) -> str:
@@ -192,20 +214,20 @@ class PromptGenerator:
             )
 
         return f"""
-You are an intelligent academic advisor.
-
-Based on the following:
-- Degree requirements and course information: {prefs.get('raw_program_phrase', self.program_name.replace('_', ' ').title())}
-- Current semester course offerings (filtered by prerequisites): {eligible_courses}
-- Student interests: {', '.join(prefs['interests']) or 'Not specified'}
-- Preferred workload: {prefs['max_credits'] or 'Not specified'} credits
-- Completed courses: {', '.join(self.completed_courses) or 'None'}
-- Unavailable days: {', '.join(prefs['unavailable_days']) or 'None'}
-
-If any required field seems unclear, also use the original user input below for context:
-"{self.user_input}"
-
-Generate an optimized course plan for this semester.
-List course codes, course names, number of credits, and give a short reason for each choice.
-Ensure prerequisites are respected and the total credits do not exceed the student's preferred limit.
-        """.strip()
+                You are an intelligent academic advisor.
+                
+                Based on the following:
+                - Degree requirements and course information: {prefs.get('raw_program_phrase', self.program_name.replace('_', ' ').title())}
+                - Current semester course offerings (filtered by prerequisites): {eligible_courses}
+                - Student interests: {', '.join(prefs['interests']) or 'Not specified'}
+                - Preferred workload: {prefs['max_credits'] or 'Not specified'} credits
+                - Completed courses: {', '.join(self.completed_courses) or 'None'}
+                - Unavailable days: {', '.join(prefs['unavailable_days']) or 'None'}
+                
+                If any required field seems unclear, also use the original user input below for context:
+                "{self.user_input}"
+                
+                Generate an optimized course plan for this semester.
+                List course codes, course names, number of credits, and give a short reason for each choice.
+                Ensure prerequisites are respected and the total credits do not exceed the student's preferred limit.
+                        """.strip()
