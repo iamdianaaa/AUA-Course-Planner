@@ -12,10 +12,23 @@ services:
     build: .
     container_name: flask-backend
     ports:
-      - "5000:5000"
+      - "5212:5212"
     environment:
       FLASK_ENV: development
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
       - redis
+  frontend:
+    build:
+      context: ./course-planner-ui
+      dockerfile: Dockerfile
+    env_file:
+      - ./course-planner-ui/.env.development
+    working_dir: /app
+    volumes:
+      - ./course-planner-ui:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: yarn dev
