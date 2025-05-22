@@ -11,22 +11,41 @@ import {
   type ChatMessage,
 } from "../api/chat";
 
+interface ChatContext {
+  previous: ChatMessage[];
+}
+
 export const useStartChat = () => {
   const qc = useQueryClient();
 
-  return useMutation<ChatResponse, Error, StartChatPayload>({
-    mutationFn: (payload) => {
+  return useMutation<ChatResponse, Error, StartChatPayload, ChatContext>({
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: ["chat", payload.user_id] });
+      const previous =
+        qc.getQueryData<ChatMessage[]>(["chat", payload.user_id]) ?? [];
       qc.setQueryData<ChatMessage[]>(
         ["chat", payload.user_id],
-        [{ role: "user", message: payload.user_input }]
+        [...previous, { role: "user", message: payload.user_input }]
       );
-      return startChat(payload);
+      return { previous };
     },
-    onSuccess(data, payload) {
+    mutationFn: (payload) => startChat(payload),
+    onError: (_err, payload, context) => {
+      if (context?.previous) {
+        qc.setQueryData<ChatMessage[]>(
+          ["chat", payload.user_id],
+          context.previous
+        );
+      }
+    },
+    onSuccess: (data, payload) => {
       qc.setQueryData<ChatMessage[]>(["chat", payload.user_id], (old = []) => [
         ...old,
         { role: "model", message: data.response },
       ]);
+    },
+    onSettled: (_data, _err, payload) => {
+      qc.invalidateQueries({ queryKey: ["chat", payload.user_id] });
     },
   });
 };
@@ -34,19 +53,34 @@ export const useStartChat = () => {
 export const useContinueChat = () => {
   const qc = useQueryClient();
 
-  return useMutation<ChatResponse, Error, ContinueChatPayload>({
-    mutationFn: (payload) => {
-      qc.setQueryData<ChatMessage[]>(["chat", payload.user_id], (old = []) => [
-        ...old,
-        { role: "user", message: payload.message },
-      ]);
-      return continueChat(payload);
+  return useMutation<ChatResponse, Error, ContinueChatPayload, ChatContext>({
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: ["chat", payload.user_id] });
+      const previous =
+        qc.getQueryData<ChatMessage[]>(["chat", payload.user_id]) ?? [];
+      qc.setQueryData<ChatMessage[]>(
+        ["chat", payload.user_id],
+        [...previous, { role: "user", message: payload.message }]
+      );
+      return { previous };
     },
-    onSuccess(data, payload) {
+    mutationFn: (payload) => continueChat(payload),
+    onError: (_err, payload, context) => {
+      if (context?.previous) {
+        qc.setQueryData<ChatMessage[]>(
+          ["chat", payload.user_id],
+          context.previous
+        );
+      }
+    },
+    onSuccess: (data, payload) => {
       qc.setQueryData<ChatMessage[]>(["chat", payload.user_id], (old = []) => [
         ...old,
         { role: "model", message: data.response },
       ]);
+    },
+    onSettled: (_data, _err, payload) => {
+      qc.invalidateQueries({ queryKey: ["chat", payload.user_id] });
     },
   });
 };
@@ -56,7 +90,7 @@ export const useResetChat = () => {
 
   return useMutation<unknown, Error, ResetChatPayload>({
     mutationFn: (payload) => resetChat(payload),
-    onSuccess(_, payload) {
+    onSuccess: (_data, payload) => {
       qc.removeQueries({ queryKey: ["chat", payload.user_id] });
     },
   });
